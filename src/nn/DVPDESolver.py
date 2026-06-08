@@ -28,12 +28,18 @@ class DVPDESolver(nn.Module):
         self.total_training_time = 0
         self.total_memory_peak = 0
 
-        # KAN preprocessor must output num_qubits features for the quantum AngleEmbedding
-        kan_network = [self.classic_network[0], self.classic_network[-2], self.num_qubits]
-        if self.encoding == "amplitude":
-            self.preprocessor = ChebyPINN(kan_network).to(self.device)
-        else:
-            self.preprocessor = ChebyPINN(kan_network).to(self.device)
+        # Preprocessor type: "PIKAN" (Chebyshev-KAN) or "PINN" (plain MLP)
+        self.network_type = self.args.get("network_type", "PIKAN").upper()
+
+        # The preprocessor must output num_qubits features for the quantum embedding
+        preprocessor_network = [
+            self.classic_network[0],
+            self.classic_network[-2],
+            self.num_qubits,
+        ]
+        self.preprocessor = self._build_preprocessor(preprocessor_network).to(
+            self.device
+        )
 
         self.postprocessor = nn.Sequential(
             nn.Linear(self.num_qubits, self.classic_network[-2]).to(self.device),
@@ -63,8 +69,13 @@ class DVPDESolver(nn.Module):
         self._initialize_weights()
 
     def _initialize_weights(self):
-        """ChebyPINN handles its own initialization, so nothing to do here."""
-        pass
+        """ChebyPINN handles its own initialization; apply Xavier to MLP layers."""
+        if self.network_type == "PINN":
+            for layer in self.preprocessor:
+                if isinstance(layer, nn.Linear):
+                    nn.init.xavier_normal_(layer.weight)
+                    if layer.bias is not None:
+                        nn.init.zeros_(layer.bias)
 
     def _initialize_logging(self):
         self.log_path = self.logger.get_output_dir()
