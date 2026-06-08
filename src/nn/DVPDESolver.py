@@ -68,6 +68,32 @@ class DVPDESolver(nn.Module):
         self._initialize_logging()
         self._initialize_weights()
 
+    def _build_preprocessor(self, network):
+        """Build the classical preprocessor.
+
+        Args:
+            network (list[int]): Layer sizes, e.g. [in, hidden, num_qubits].
+
+        Returns:
+            nn.Module: a ChebyPINN (PIKAN) or an MLP (PINN) network.
+        """
+        if self.network_type == "PIKAN":
+            self.logger.print("Using PIKAN (Chebyshev-KAN) preprocessor")
+            return ChebyPINN(network)
+        elif self.network_type == "PINN":
+            self.logger.print("Using PINN (MLP) preprocessor")
+            layers = []
+            for i in range(len(network) - 1):
+                layers.append(nn.Linear(network[i], network[i + 1]))
+                if i < len(network) - 2:
+                    layers.append(nn.Tanh())
+            return nn.Sequential(*layers)
+        else:
+            raise ValueError(
+                f"Unknown network_type '{self.network_type}'. "
+                "Expected 'PIKAN' or 'PINN'."
+            )
+
     def _initialize_weights(self):
         """ChebyPINN handles its own initialization; apply Xavier to MLP layers."""
         if self.network_type == "PINN":
