@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from src.utils.logger import Logging
 from src.nn.DVQuantumLayer import DVQuantumLayer
+from src.nn.cheby_kan import ChebyPINN
 
 
 class DVPDESolver(nn.Module):
@@ -26,22 +27,13 @@ class DVPDESolver(nn.Module):
         self.classic_network = self.args["classic_network"]  # [3, 50, 50, 50, 4] #
         self.total_training_time = 0
         self.total_memory_peak = 0
+
+        # KAN preprocessor must output num_qubits features for the quantum AngleEmbedding
+        kan_network = [self.classic_network[0], self.classic_network[-2], self.num_qubits]
         if self.encoding == "amplitude":
-            self.preprocessor = nn.Sequential(
-                nn.Linear(self.classic_network[0], self.classic_network[-2]).to(
-                    self.device
-                ),
-                nn.Tanh(),
-                nn.Linear(self.classic_network[-2], self.num_qubits).to(self.device),
-            ).to(self.device)
+            self.preprocessor = ChebyPINN(kan_network).to(self.device)
         else:
-            self.preprocessor = nn.Sequential(
-                nn.Linear(self.classic_network[0], self.classic_network[-2]).to(
-                    self.device
-                ),
-                nn.Tanh(),
-                nn.Linear(self.classic_network[-2], self.num_qubits).to(self.device),
-            ).to(self.device)
+            self.preprocessor = ChebyPINN(kan_network).to(self.device)
 
         self.postprocessor = nn.Sequential(
             nn.Linear(self.num_qubits, self.classic_network[-2]).to(self.device),
@@ -71,14 +63,8 @@ class DVPDESolver(nn.Module):
         self._initialize_weights()
 
     def _initialize_weights(self):
-        """Apply Xavier initialization to all layers."""
-        for layer in self.preprocessor:
-            if isinstance(layer, nn.Linear):
-                nn.init.xavier_normal_(
-                    layer.weight
-                )  # Or use xavier_normal_ for normal distribution
-                if layer.bias is not None:
-                    nn.init.zeros_(layer.bias)  # Set biases to zero
+        """ChebyPINN handles its own initialization, so nothing to do here."""
+        pass
 
     def _initialize_logging(self):
         self.log_path = self.logger.get_output_dir()

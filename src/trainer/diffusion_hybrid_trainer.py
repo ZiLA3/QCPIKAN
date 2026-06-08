@@ -44,12 +44,12 @@ args = {
     "activation": "tanh",  
     "shots": None,  # Analytical gradients enabled
     "problem": "diffusion",
-    "solver": "Classical",  # options : "CV", "Classical", "DV"
+    "solver": "DV",  # options : "CV", "Classical", "DV"
     "device": DEVICE,
     "method": "None",
     "cutoff_dim": cutoff_dim,  # num_qubits >= cutoff_dim
     "class": "CVNeuralNetwork1",  # options CVNeuralNetwork1, CVNeuralNetwork2, CVNeuralNetwork3
-    "encoding": "None",  # options : "ampiltude" , "angle" for DV , none for others
+    "encoding": "angle",  # options : "ampiltude" , "angle" for DV , none for others
 }
 
 
