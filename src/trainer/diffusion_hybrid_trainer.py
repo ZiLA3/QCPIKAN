@@ -39,7 +39,7 @@ args = {
     "hidden_dim": hidden_dim,
     "num_quantum_layers": num_quantum_layers,
     "classic_network": classic_network,
-    "q_ansatz": "cascade",  # options: None , alternate, layered , cascade, cross_mesh ,farhi
+    "q_ansatz": "cross_mesh",  # options: None , alternate, layered , cascade, cross_mesh ,farhi
     "mode": mode,
     "activation": "tanh",  
     "shots": None,  # Analytical gradients enabled
@@ -50,6 +50,7 @@ args = {
     "cutoff_dim": cutoff_dim,  # num_qubits >= cutoff_dim
     "class": "CVNeuralNetwork1",  # options CVNeuralNetwork1, CVNeuralNetwork2, CVNeuralNetwork3
     "encoding": "angle",  # options : "ampiltude" , "angle" for DV , none for others
+    "network_type": "PIKAN",  # options : "PIKAN" (Chebyshev-KAN) or "PINN" (plain MLP)
 }
 
 

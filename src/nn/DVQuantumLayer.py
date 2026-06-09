@@ -97,7 +97,13 @@ class DVQuantumLayer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # return torch.stack([self.circuit(sample) for sample in x]) # this line does the same but very slow since it requires running the quantum circuit for each input instance
-        return self.circuit(x)   # vectorized input, no Python loop.. transpose in the main function or here is important
+        out = self.circuit(x)   # vectorized input, no Python loop.. transpose in the main function or here is important
+        # PennyLane >= 0.30 returns a list/tuple of per-wire expvals instead of a
+        # single stacked tensor (0.29 behaviour). Stack so the downstream
+        # .to()/.view() in DVPDESolver works on any PennyLane version.
+        if isinstance(out, (list, tuple)):
+            out = torch.stack(out, dim=0)
+        return out
 
     def _quantum_circuit(self, x):
         if self.encoding == "amplitude":
