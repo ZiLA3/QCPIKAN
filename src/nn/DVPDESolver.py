@@ -32,9 +32,11 @@ class DVPDESolver(nn.Module):
         self.network_type = self.args.get("network_type", "PIKAN").upper()
 
         # The preprocessor must output num_qubits features for the quantum embedding
+        preprocessor_hidden = self.args.get("pikan_hidden", self.classic_network[-2]) \
+            if self.network_type == "PIKAN" else self.classic_network[-2]
         preprocessor_network = [
             self.classic_network[0],
-            self.classic_network[-2],
+            preprocessor_hidden,
             self.num_qubits,
         ]
         self.preprocessor = self._build_preprocessor(preprocessor_network).to(
